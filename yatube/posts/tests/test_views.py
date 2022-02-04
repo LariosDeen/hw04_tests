@@ -86,14 +86,16 @@ class PostViewsTests(TestCase):
                 self.assertTemplateUsed(response, template)
 
     def test_index_correct_context(self):
-        """Шаблон index формируется со всеми постами."""
+        """Шаблон index формируется со всеми постами из БД."""
         response = self.author_client.get(reverse('posts:index'))
         object_post_list = response.context['page_obj'].object_list
         self.assertTrue(self.post_1 in object_post_list)
         self.assertTrue(self.post_2 in object_post_list)
 
     def test_group_posts_correct_context(self):
-        """Шаблон group_posts формируется с постами одной группы."""
+        """Шаблон group_posts формируется с постами
+        отфильтрованными по группе.
+        """
         response = self.author_client.get(
             reverse('posts:group_posts',
                     kwargs={'slug': self.group_mouses.slug}

@@ -75,11 +75,13 @@ class PostURLTests(TestCase):
 
     def test_unexisting_page(self):
         """Проверяем статус несуществующей страницы"""
-        response = self.guest_client.get('/unexisting_page/')
-        self.assertEqual(response.status_code, 404)
+        response_1 = self.guest_client.get('/unexisting_page/')
+        response_2 = self.author_client.get('/unexisting_page/')
+        self.assertEqual(response_1.status_code, 404)
+        self.assertEqual(response_2.status_code, 404)
 
     def test_templates(self):
-        """Проверяем вызываемые шаблоны для соответствующих url"""
+        """Проверяем вызываемые шаблоны для соответствующих URLs"""
         url_template_list = {
             '/': 'posts/index.html',
             '/create/': 'posts/create_post.html',

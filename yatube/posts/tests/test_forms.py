@@ -1,18 +1,11 @@
-import shutil
-import tempfile
-
-from django.conf import settings
-from django.test import Client, TestCase, override_settings
+from django.test import Client, TestCase
 from django.contrib.auth import get_user_model
 
 from posts.models import Post, Group
 
 User = get_user_model()
 
-TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
-
-@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class TaskCreateFormTests(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -29,11 +22,6 @@ class TaskCreateFormTests(TestCase):
             pub_date='01.02.2022',
             group_id=cls.group.id
         )
-
-    @classmethod
-    def tearDownClass(cls):
-        super().tearDownClass()
-        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def setUp(self):
         self.guest_client = Client()
