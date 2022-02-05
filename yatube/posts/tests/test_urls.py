@@ -11,6 +11,7 @@ class PostURLTests(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.user = User.objects.create_user(username='MikeyMouse')
+        cls.user_2 = User.objects.create_user(username='SpiderMan')
         cls.group = Group.objects.create(
             title='Тестовая группа',
             slug='mouses',
@@ -20,6 +21,26 @@ class PostURLTests(TestCase):
             author=cls.user,
             text='Тестовый пост',
         )
+        cls.post_2 = Post.objects.create(
+            author=cls.user_2,
+            text='Тестовый пост',
+        )
+        cls.pages_list = [
+            '/',
+            '/group/mouses/',
+            '/profile/MikeyMouse/',
+            '/posts/1/',
+            '/create/',
+            '/posts/1/edit/',
+        ]
+        cls.url_template_dict = {
+            '/': 'posts/index.html',
+            '/create/': 'posts/create_post.html',
+            '/posts/1/': 'posts/post_detail.html',
+            '/group/mouses/': 'posts/group_list.html',
+            '/posts/1/edit/': 'posts/create_post.html',
+            '/profile/MikeyMouse/': 'posts/profile.html',
+        }
 
     def setUp(self):
         self.guest_client = Client()
@@ -30,67 +51,49 @@ class PostURLTests(TestCase):
         """Проверяем вход незарегистрированного пользователя
         на общедоступные страницы.
         """
-        public_pages_list = [
-            '/',
-            '/group/mouses/',
-            '/profile/MikeyMouse/',
-            '/posts/1/',
-        ]
-        for page in public_pages_list:
+        for page in self.pages_list[:4]:
             with self.subTest(page=page):
                 response = self.guest_client.get(page)
                 self.assertEqual(response.status_code, 200)
 
+    def test_redirect_pages(self):
+        """Проверяем редирект незарегистрированного пользователя
+        при попытке войти на страницы для зарегистрированного ползователя.
+        """
+        for page in self.pages_list[4:]:
+            with self.subTest(page=page):
+                response = self.guest_client.get(page)
+                self.assertEqual(response.status_code, 302)
+
     def test_edit_page(self):
-        """Проверяем доступность страниц для автора"""
-        author_pages_list = [
-            '/',
-            '/group/mouses/',
-            '/profile/MikeyMouse/',
-            '/posts/1/',
-            '/posts/1/edit/',
-            '/create/',
-        ]
-        for page in author_pages_list:
+        """Проверяем доступность страниц для автора."""
+        for page in self.pages_list:
             with self.subTest(page=page):
                 response = self.author_client.get(page)
                 self.assertEqual(response.status_code, 200)
 
     def test_create_page(self):
-        """Проверяем доступность страниц для авторизованного пользователя"""
-        authorized_pages_list = [
-            '/',
-            '/group/mouses/',
-            '/profile/MikeyMouse/',
-            '/posts/1/',
-            '/create/',
-        ]
-        user = User.objects.create_user(username='SpiderMan')
-        authorized_client = Client()
-        authorized_client.force_login(user)
-        for page in authorized_pages_list:
+        """Проверяем доступность страниц для авторизованного пользователя."""
+        for page in self.pages_list[:5]:
             with self.subTest(page=page):
                 response = self.author_client.get(page)
                 self.assertEqual(response.status_code, 200)
 
+    def test_redirect_for_authorized_client(self):
+        """Проверяем редирект авторизованного пользователя при попытке
+        войти на страницу редактирования поста для другого автора.
+        """
+        response = self.author_client.get('/posts/2/edit/')
+        self.assertEqual(response.status_code, 302)
+
     def test_unexisting_page(self):
-        """Проверяем статус несуществующей страницы"""
-        response_1 = self.guest_client.get('/unexisting_page/')
-        response_2 = self.author_client.get('/unexisting_page/')
-        self.assertEqual(response_1.status_code, 404)
-        self.assertEqual(response_2.status_code, 404)
+        """Проверяем статус несуществующей страницы."""
+        response = self.guest_client.get('/unexisting_page/')
+        self.assertEqual(response.status_code, 404)
 
     def test_templates(self):
-        """Проверяем вызываемые шаблоны для соответствующих URLs"""
-        url_template_list = {
-            '/': 'posts/index.html',
-            '/create/': 'posts/create_post.html',
-            '/posts/1/': 'posts/post_detail.html',
-            '/group/mouses/': 'posts/group_list.html',
-            '/posts/1/edit/': 'posts/create_post.html',
-            '/profile/MikeyMouse/': 'posts/profile.html',
-        }
-        for url, template in url_template_list.items():
+        """Проверяем вызываемые шаблоны для соответствующих URLs."""
+        for url, template in self.url_template_dict.items():
             with self.subTest(template=template):
                 response = self.author_client.get(url)
                 self.assertTemplateUsed(response, template)

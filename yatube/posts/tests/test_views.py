@@ -3,6 +3,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 from django import forms
 
+from ..forms import PostForm
 from ..models import Group, Post
 
 User = get_user_model()
@@ -38,7 +39,7 @@ class PostViewsTests(TestCase):
         )
         cls.form_data = {
             'text': 'Новый пост',
-            'group': cls.group_mouses.pk,
+            'group': cls.group_mouses.id,
             'author': cls.post_1.author
         }
         cls.form_fields = {
@@ -118,6 +119,12 @@ class PostViewsTests(TestCase):
         self.assertEqual(
             object_page_obj.object_list[0].author,
             self.post_2.author)
+        self.assertEqual(
+            object_page_obj.object_list[0].text,
+            self.post_2.text)
+        self.assertEqual(
+            object_page_obj.object_list[0].group,
+            self.post_2.group)
         self.assertEqual(len(object_page_obj.object_list), 1)
 
     def test_post_detail_correct_context(self):
@@ -136,15 +143,11 @@ class PostViewsTests(TestCase):
 
     def test_paginator_correct_context(self):
         """Шаблоны index, group_posts и profile формируются с
-        правильным контекстом для пажинатора
+        правильным контекстом для пажинатора.
         """
-        for number in range(0, 15):
-            Post.objects.create(
-                author=self.user_1,
-                text='Тестовый пост 1',
-                pub_date='03.02.2022',
-                group_id=1
-            )
+        Post.objects.bulk_create(
+            [Post(author=self.user_1, text='T', group_id=1)] * 15
+        )
         for name_page in self.name_page_list:
             with self.subTest(reverse_name=name_page):
                 response = self.guest_client.get(name_page)
@@ -163,6 +166,8 @@ class PostViewsTests(TestCase):
                 form_field = response.context['form'].fields[value]
                 self.assertIsInstance(form_field, expected)
         self.assertIsNone(response.context['widget']['value'])
+        self.assertIsInstance(response.context['form'], PostForm)
+        self.assertIsNone(response.context.get('is_edit', None))
 
     def test_post_edit_correct_context(self):
         """Шаблон post_edit формируется с полями
@@ -180,6 +185,9 @@ class PostViewsTests(TestCase):
         self.assertEqual(
             response.context['widget']['value'], self.post_1.text
         )
+        self.assertIsInstance(response.context['form'], PostForm)
+        self.assertTrue(response.context['is_edit'])
+        self.assertIsInstance(response.context['is_edit'], bool)
 
     def test_new_post_in_pages(self):
         """Проверка появления вновь созданного поста c указанием
