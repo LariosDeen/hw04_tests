@@ -64,6 +64,7 @@ class PostURLTests(TestCase):
             with self.subTest(page=page):
                 response = self.guest_client.get(page)
                 self.assertEqual(response.status_code, 302)
+                self.assertRedirects(response, f'/auth/login/?next={page}')
 
     def test_edit_page(self):
         """Проверяем доступность страниц для автора."""
@@ -85,6 +86,7 @@ class PostURLTests(TestCase):
         """
         response = self.author_client.get('/posts/2/edit/')
         self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, '/posts/2/')
 
     def test_unexisting_page(self):
         """Проверяем статус несуществующей страницы."""

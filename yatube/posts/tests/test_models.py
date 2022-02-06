@@ -6,7 +6,7 @@ from ..models import Group, Post
 User = get_user_model()
 
 
-class PostModelTest(TestCase):
+class PostModelTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -25,17 +25,17 @@ class PostModelTest(TestCase):
         """Проверяем, что у моделей Post и Group
         корректно работает __str__.
         """
-        post = PostModelTest.post
+        post = PostModelTests.post
         expected_post_str = post.text[:15]
         self.assertEqual(expected_post_str, str(post))
 
-        group = PostModelTest.group
+        group = PostModelTests.group
         expected_group_str = group.title
         self.assertEqual(expected_group_str, str(group))
 
     def test_post_verbose_name(self):
         """verbose_name в полях модели Post совпадает с ожидаемым."""
-        post = PostModelTest.post
+        post = PostModelTests.post
         field_verbose = {
             'text': 'Текст поста',
             'pub_date': 'Дата публикации',
@@ -49,7 +49,7 @@ class PostModelTest(TestCase):
 
     def test_post_help_text(self):
         """help_text в полях модели Post совпадает с ожидаемым."""
-        post = PostModelTest.post
+        post = PostModelTests.post
         field_help_texts = {
             'text': 'Введите текст поста',
             'group': 'Выберите группу',
