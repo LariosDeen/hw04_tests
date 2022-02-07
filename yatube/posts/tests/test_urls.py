@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase, Client
+from django.urls import reverse
 
 from ..models import Group, Post
 
@@ -82,11 +83,16 @@ class PostURLTests(TestCase):
 
     def test_redirect_for_authorized_client(self):
         """Проверяем редирект авторизованного пользователя при попытке
-        войти на страницу редактирования поста для другого автора.
+        войти на страницу редактирования поста другого автора.
         """
-        response = self.author_client.get('/posts/2/edit/')
+        response = self.author_client.get(
+            reverse('posts:post_edit', kwargs={'post_id': self.post_2.id})
+        )
+        redirect_url = reverse(
+            'posts:post_detail', kwargs={'post_id': self.post_2.id}
+        )
         self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, '/posts/2/')
+        self.assertRedirects(response, redirect_url)
 
     def test_unexisting_page(self):
         """Проверяем статус несуществующей страницы."""
